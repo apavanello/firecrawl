@@ -213,6 +213,14 @@ class AuthProxyHandler(BaseHTTPRequestHandler):
             log.debug("Admin: unknown endpoint %s %s", self.command, path)
             self._send_error(404, "Unknown admin endpoint")
 
+    def _handle_health(self):
+        """Public health check endpoint (no auth required)."""
+        log.debug("Health check: responding OK")
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.end_headers()
+        self.wfile.write(json.dumps({"status": "ok"}).encode())
+
     def _handle_proxy(self):
         """Proxy the request to the backend after validating token."""
         # Extract Bearer token
@@ -281,7 +289,9 @@ class AuthProxyHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         """Handle GET requests."""
-        if self.path.startswith("/admin"):
+        if self.path == "/health":
+            self._handle_health()
+        elif self.path.startswith("/admin"):
             self._handle_admin()
         else:
             self._handle_proxy()
@@ -310,7 +320,10 @@ class AuthProxyHandler(BaseHTTPRequestHandler):
 
     def do_HEAD(self):
         """Handle HEAD requests."""
-        self._handle_proxy()
+        if self.path == "/health":
+            self._handle_health()
+        else:
+            self._handle_proxy()
 
     def do_OPTIONS(self):
         """Handle OPTIONS requests."""

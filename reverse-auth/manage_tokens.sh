@@ -1,6 +1,14 @@
 #!/bin/bash
 # Script para gerenciar tokens do Auth Gateway
 
+# Auto-carregar .env do mesmo diretório do script (se existir)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$SCRIPT_DIR/.env" ]; then
+    set -a
+    source "$SCRIPT_DIR/.env"
+    set +a
+fi
+
 GATEWAY_URL="${GATEWAY_URL:-http://localhost:8080}"
 ADMIN_TOKEN="${ADMIN_TOKEN}"
 
@@ -34,8 +42,10 @@ check_admin_token() {
 
 # Health check
 cmd_health() {
+    check_admin_token
     echo -e "${GREEN}Verificando saúde do gateway...${NC}"
-    curl -s "$GATEWAY_URL/admin/health" | jq .
+    curl -s -H "Authorization: Bearer $ADMIN_TOKEN" \
+      "$GATEWAY_URL/admin/health" | jq .
 }
 
 # Listar tokens
