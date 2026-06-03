@@ -58,7 +58,7 @@ x-common-env: &common-env
 
 services:
   auth-gateway:
-    build: .
+    build: firecrawl-auth-gateway
     container_name: firecrawl-auth-gateway
     restart: unless-stopped
     environment:
