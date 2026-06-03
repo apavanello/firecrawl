@@ -11,6 +11,8 @@ services:
       # Token de administração (opcional, mas recomendado)
       # Gere com: openssl rand -base64 32
       - ADMIN_TOKEN=${ADMIN_TOKEN:-}
+      # Habilitar logs de debug (true/false)
+      - DEBUG=${DEBUG:-false}
     ports:
       - "8080:80"
     volumes:
