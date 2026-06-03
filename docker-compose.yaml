@@ -73,6 +73,8 @@ services:
       - PROXY_URL=${PROXY_URL:-http://api:3002}
     ports:
       - "3003:80"
+    networks:
+      - backend
     volumes:
       # Persiste os tokens mesmo após reinicialização
       - auth_tokens:/data
@@ -82,9 +84,6 @@ services:
       timeout: 5s
       retries: 3
       start_period: 5s
-    # Se Firecrawl estiver em outro container, adicione:
-    # depends_on:
-    #   - api
 
   playwright-service:
     # NOTE: If you don't want to build the service locally,
