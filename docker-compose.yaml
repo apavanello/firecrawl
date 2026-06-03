@@ -86,7 +86,7 @@ services:
       start_period: 5s
     # Se Firecrawl estiver em outro container, adicione:
     # depends_on:
-       - api
+    #   - api
 
   playwright-service:
     # NOTE: If you don't want to build the service locally,
@@ -200,8 +200,6 @@ services:
 volumes:
   auth_tokens:
     driver: local
-
-
 networks:
   backend:
     driver: bridge
