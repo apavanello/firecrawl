@@ -62,8 +62,6 @@ services:
     container_name: firecrawl-auth-gateway
     restart: unless-stopped
     environment:
-      # URL do Firecrawl (ajuste conforme seu setup)
-      - PROXY_URL=http://google.com.br
       # Porta de escuta
       - LISTEN_PORT=80
       # Token de administração (opcional, mas recomendado)
