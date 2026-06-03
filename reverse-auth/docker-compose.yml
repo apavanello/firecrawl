@@ -13,13 +13,15 @@ services:
       - ADMIN_TOKEN=${ADMIN_TOKEN:-}
       # Habilitar logs de debug (true/false)
       - DEBUG=${DEBUG:-false}
+      # URL do Firecrawl (ajuste conforme seu setup)
+      - PROXY_URL=${PROXY_URL:-http://api:3002}
     ports:
       - "8080:80"
     volumes:
       # Persiste os tokens mesmo após reinicialização
       - auth_tokens:/data
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:80/health')"]
+      test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:80/health')" ]
       interval: 30s
       timeout: 5s
       retries: 3

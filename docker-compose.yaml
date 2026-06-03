@@ -57,27 +57,36 @@ x-common-env: &common-env
   SEARXNG_CATEGORIES: ${SEARXNG_CATEGORIES}
 
 services:
-
-  reverse-auth:
-    build: reverse-auth
+  auth-gateway:
+    build: .
     container_name: firecrawl-auth-gateway
     restart: unless-stopped
     environment:
       # URL do Firecrawl (ajuste conforme seu setup)
-      - PROXY_URL=http://api:${INTERNAL_PORT:-3002}
+      - PROXY_URL=http://google.com.br
       # Porta de escuta
-      - LISTEN_PORT=${AUTH_PORT:-3003}
+      - LISTEN_PORT=80
       # Token de administração (opcional, mas recomendado)
       # Gere com: openssl rand -base64 32
       - ADMIN_TOKEN=${ADMIN_TOKEN:-}
+      # Habilitar logs de debug (true/false)
+      - DEBUG=${DEBUG:-false}
+      # URL do Firecrawl (ajuste conforme seu setup)
+      - PROXY_URL=${PROXY_URL:-http://api:3002}
     ports:
       - "8080:80"
     volumes:
       # Persiste os tokens mesmo após reinicialização
       - auth_tokens:/data
+    healthcheck:
+      test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:80/health')" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
     # Se Firecrawl estiver em outro container, adicione:
-    depends_on:
-      - api
+    # depends_on:
+       - api
 
   playwright-service:
     # NOTE: If you don't want to build the service locally,
@@ -187,6 +196,11 @@ services:
         max-size: "10m"
         max-file: "3"
         compress: "true"
+
+volumes:
+  auth_tokens:
+    driver: local
+
 
 networks:
   backend:
