@@ -72,7 +72,7 @@ services:
       # URL do Firecrawl (ajuste conforme seu setup)
       - PROXY_URL=${PROXY_URL:-http://api:3002}
     ports:
-      - "8080:80"
+      - "3003:80"
     volumes:
       # Persiste os tokens mesmo após reinicialização
       - auth_tokens:/data
