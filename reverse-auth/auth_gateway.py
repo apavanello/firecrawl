@@ -9,6 +9,7 @@ Tokens are persisted in a JSON file (survives container restarts).
 import os
 import json
 import hashlib
+import hmac
 import secrets
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse
@@ -21,6 +22,8 @@ PROXY_URL = os.getenv("PROXY_URL", "http://localhost:3002")
 TOKENS_FILE = os.getenv("TOKENS_FILE", "/data/tokens.json")
 LISTEN_PORT = int(os.getenv("LISTEN_PORT", "80"))
 ADMIN_TOKEN = os.getenv("ADMIN_TOKEN", "")  # Optional: protect admin endpoints
+MAX_ADMIN_BODY = 1024  # 1 KB max for admin requests
+MAX_PROXY_BODY = 10 * 1024 * 1024  # 10 MB max for proxied requests
 
 # In-memory token store (loaded from file)
 _tokens: dict[str, str] = {}
@@ -53,23 +56,29 @@ def save_tokens():
         print(f"Error saving tokens: {e}")
 
 
+def _hash_token(token: str) -> str:
+    """Hash a token with SHA-256 for secure storage."""
+    return hashlib.sha256(token.encode()).hexdigest()
+
+
 def generate_token(name: str) -> str:
-    """Generate a new token and persist it."""
+    """Generate a new token and persist its hash."""
     token = secrets.token_urlsafe(48)
-    _tokens[token] = name
+    _tokens[_hash_token(token)] = name
     save_tokens()
     return token
 
 
 def validate_token(token: str) -> Optional[str]:
     """Validate a Bearer token. Returns the token name if valid, None otherwise."""
-    return _tokens.get(token)
+    return _tokens.get(_hash_token(token))
 
 
 def remove_token(token: str) -> bool:
-    """Remove a token. Returns True if removed."""
-    if token in _tokens:
-        del _tokens[token]
+    """Remove a token by its raw value. Returns True if removed."""
+    hashed = _hash_token(token)
+    if hashed in _tokens:
+        del _tokens[hashed]
         save_tokens()
         return True
     return False
@@ -97,7 +106,7 @@ class AuthProxyHandler(BaseHTTPRequestHandler):
             return True  # No admin protection
         auth_header = self.headers.get("Authorization", "")
         if auth_header.startswith("Bearer "):
-            return auth_header[7:] == ADMIN_TOKEN
+            return hmac.compare_digest(auth_header[7:], ADMIN_TOKEN)
         return False
 
     def _handle_admin(self):
@@ -120,6 +129,9 @@ class AuthProxyHandler(BaseHTTPRequestHandler):
         elif path == "/admin/tokens" and self.command == "POST":
             # Add a new token
             content_length = int(self.headers.get("Content-Length", 0))
+            if content_length > MAX_ADMIN_BODY:
+                self._send_error(413, "Request body too large")
+                return
             body = self.rfile.read(content_length).decode()
             try:
                 data = json.loads(body)
@@ -189,6 +201,9 @@ class AuthProxyHandler(BaseHTTPRequestHandler):
         try:
             # Read request body if present
             content_length = int(self.headers.get("Content-Length", 0))
+            if content_length > MAX_PROXY_BODY:
+                self._send_error(413, "Request body too large")
+                return
             body = self.rfile.read(content_length) if content_length > 0 else None
 
             # Make the proxied request
@@ -210,7 +225,8 @@ class AuthProxyHandler(BaseHTTPRequestHandler):
             self.wfile.write(response.content)
 
         except requests.exceptions.RequestException as e:
-            self._send_error(502, f"Bad Gateway: {str(e)}")
+            print(f"[PROXY ERROR] {self.command} {self.path}: {e}")
+            self._send_error(502, "Bad Gateway: upstream service unavailable")
 
     def do_GET(self):
         """Handle GET requests."""

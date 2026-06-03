@@ -27,7 +27,7 @@ show_usage() {
 check_admin_token() {
     if [ -z "$ADMIN_TOKEN" ]; then
         echo -e "${RED}Erro: ADMIN_TOKEN não está setado${NC}"
-        echo "Exporte a variável: export ADMIN_TOKEN=***
+        echo "Exporte a variável: export ADMIN_TOKEN=***"
         exit 1
     fi
 }

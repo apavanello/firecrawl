@@ -1,0 +1,9 @@
+.git
+.gitignore
+.env
+.env.example
+README.md
+manage_tokens.sh
+__pycache__/
+*.pyc
+*.md

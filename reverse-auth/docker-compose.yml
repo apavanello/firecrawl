@@ -1,0 +1,25 @@
+services:
+  auth-gateway:
+    build: .
+    container_name: firecrawl-auth-gateway
+    restart: unless-stopped
+    environment:
+      # URL do Firecrawl (ajuste conforme seu setup)
+      - PROXY_URL=http://firecrawl:3002
+      # Porta de escuta
+      - LISTEN_PORT=80
+      # Token de administração (opcional, mas recomendado)
+      # Gere com: openssl rand -base64 32
+      - ADMIN_TOKEN=${ADMIN_TOKEN:-}
+    ports:
+      - "8080:80"
+    volumes:
+      # Persiste os tokens mesmo após reinicialização
+      - auth_tokens:/data
+    # Se Firecrawl estiver em outro container, adicione:
+    # depends_on:
+    #   - firecrawl
+
+volumes:
+  auth_tokens:
+    driver: local

@@ -1,0 +1,17 @@
+# Environment
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+# Data
+/data/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
